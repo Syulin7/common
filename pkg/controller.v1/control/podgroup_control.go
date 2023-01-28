@@ -193,3 +193,74 @@ func (s *SchedulerPluginsControl) CreatePodGroup(podGroup client.Object) error {
 }
 
 var _ PodGroupControlInterface = &SchedulerPluginsControl{}
+
+// KoordinatorControl is the  implementation of PodGroupControlInterface with scheduler-plugins.
+type KoordinatorControl struct {
+	Client client.Client
+}
+
+func (s *KoordinatorControl) DecoratePodTemplateSpec(pts *corev1.PodTemplateSpec, job metav1.Object, _ string) {
+	if pts.Labels == nil {
+		pts.Labels = make(map[string]string)
+	}
+	pts.Labels[schedulerpluginsv1alpha1.PodGroupLabel] = job.GetName()
+}
+
+func (s *KoordinatorControl) GetSchedulerName() string {
+	return ""
+}
+
+// NewKoordinatorControl returns a SchedulerPluginsControl
+func NewKoordinatorControl(c client.Client) PodGroupControlInterface {
+	return &KoordinatorControl{Client: c}
+}
+
+func (s *KoordinatorControl) DelayPodCreationDueToPodGroup(pg metav1.Object) bool {
+	return false
+}
+
+func (s *KoordinatorControl) NewEmptyPodGroup() client.Object {
+	return &schedulerpluginsv1alpha1.PodGroup{}
+}
+
+func (s *KoordinatorControl) GetPodGroup(namespace, name string) (metav1.Object, error) {
+	pg := &schedulerpluginsv1alpha1.PodGroup{}
+	ctx := context.TODO()
+	key := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+	if err := s.Client.Get(ctx, key, pg); err != nil {
+		return nil, err
+	}
+	return pg, nil
+}
+
+func (s *KoordinatorControl) DeletePodGroup(namespace, name string) error {
+	ctx := context.TODO()
+	pg := s.NewEmptyPodGroup()
+	pg.SetNamespace(namespace)
+	pg.SetName(name)
+
+	return s.Client.Delete(ctx, pg)
+}
+
+func (s *KoordinatorControl) UpdatePodGroup(podGroup client.Object) error {
+	pg := podGroup.(*schedulerpluginsv1alpha1.PodGroup)
+	err := s.Client.Update(context.TODO(), pg, &client.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to update a PodGroup, '%v': %v", klog.KObj(pg), err)
+	}
+	return nil
+}
+
+func (s *KoordinatorControl) CreatePodGroup(podGroup client.Object) error {
+	pg := podGroup.(*schedulerpluginsv1alpha1.PodGroup)
+	err := s.Client.Create(context.TODO(), pg, &client.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to create a PodGroup, '%v': %v", klog.KObj(pg), err)
+	}
+	return nil
+}
+
+var _ PodGroupControlInterface = &KoordinatorControl{}

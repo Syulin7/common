@@ -72,6 +72,7 @@ const (
 	GangSchedulerNone             GangScheduler = "None"
 	GangSchedulerVolcano          GangScheduler = "volcano"
 	GangSchedulerSchedulerPlugins GangScheduler = "scheduler-plugins"
+	GangSchedulerKoordinator      GangScheduler = "koordinator"
 )
 
 // JobControllerConfiguration contains configuration of operator.
@@ -174,6 +175,13 @@ var GenSchedulerPluginsSetupFunc = func(c client.Client) GangSchedulingSetupFunc
 	return func(jc *JobController) {
 		jc.Config.GangScheduling = GangSchedulerSchedulerPlugins
 		jc.PodGroupControl = control.NewSchedulerPluginsControl(c)
+	}
+}
+
+var GenKoordinatorSetupFunc = func(c client.Client) GangSchedulingSetupFunc {
+	return func(jc *JobController) {
+		jc.Config.GangScheduling = GangSchedulerKoordinator
+		jc.PodGroupControl = control.NewKoordinatorControl(c)
 	}
 }
 
