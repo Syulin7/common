@@ -72,7 +72,7 @@ const (
 	GangSchedulerNone             GangScheduler = "None"
 	GangSchedulerVolcano          GangScheduler = "volcano"
 	GangSchedulerSchedulerPlugins GangScheduler = "scheduler-plugins"
-	GangSchedulerKoordinator      GangScheduler = "koordinator"
+	GangSchedulerKoordinator      GangScheduler = "koord-scheduler"
 )
 
 // JobControllerConfiguration contains configuration of operator.
