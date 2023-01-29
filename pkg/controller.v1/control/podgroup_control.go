@@ -200,6 +200,9 @@ type KoordinatorControl struct {
 }
 
 func (s *KoordinatorControl) DecoratePodTemplateSpec(pts *corev1.PodTemplateSpec, job metav1.Object, _ string) {
+	if len(pts.Spec.SchedulerName) == 0 {
+		pts.Spec.SchedulerName = s.GetSchedulerName()
+	}
 	if pts.Labels == nil {
 		pts.Labels = make(map[string]string)
 	}
