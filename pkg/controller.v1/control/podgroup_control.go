@@ -210,7 +210,7 @@ func (s *KoordinatorControl) DecoratePodTemplateSpec(pts *corev1.PodTemplateSpec
 }
 
 func (s *KoordinatorControl) GetSchedulerName() string {
-	return ""
+	return "koord-scheduler"
 }
 
 // NewKoordinatorControl returns a SchedulerPluginsControl
