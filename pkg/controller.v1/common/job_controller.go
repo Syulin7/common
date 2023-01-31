@@ -178,6 +178,13 @@ var GenSchedulerPluginsSetupFunc = func(c client.Client) GangSchedulingSetupFunc
 	}
 }
 
+var GenKoordinatorSetupFunc = func(c client.Client) GangSchedulingSetupFunc {
+	return func(jc *JobController) {
+		jc.Config.GangScheduling = GangSchedulerKoordinator
+		jc.PodGroupControl = control.NewKoordinatorControl(c)
+	}
+}
+
 var GenNonGangSchedulerSetupFunc = func() GangSchedulingSetupFunc {
 	return func(jc *JobController) {
 		jc.Config.GangScheduling = GangSchedulerNone
