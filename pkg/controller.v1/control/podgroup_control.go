@@ -193,3 +193,29 @@ func (s *SchedulerPluginsControl) CreatePodGroup(podGroup client.Object) error {
 }
 
 var _ PodGroupControlInterface = &SchedulerPluginsControl{}
+
+// KoordinatorControl is the  implementation of PodGroupControlInterface with scheduler-plugins.
+type KoordinatorControl struct {
+	*SchedulerPluginsControl
+}
+
+func (s *KoordinatorControl) DecoratePodTemplateSpec(pts *corev1.PodTemplateSpec, job metav1.Object, _ string) {
+	if len(pts.Spec.SchedulerName) == 0 {
+		pts.Spec.SchedulerName = s.GetSchedulerName()
+	}
+	if pts.Labels == nil {
+		pts.Labels = make(map[string]string)
+	}
+	pts.Labels[schedulerpluginsv1alpha1.PodGroupLabel] = job.GetName()
+}
+
+func (s *KoordinatorControl) GetSchedulerName() string {
+	return "koord-scheduler"
+}
+
+// NewKoordinatorControl returns a SchedulerPluginsControl
+func NewKoordinatorControl(c client.Client) PodGroupControlInterface {
+	return &KoordinatorControl{&SchedulerPluginsControl{Client: c}}
+}
+
+var _ PodGroupControlInterface = &KoordinatorControl{}
