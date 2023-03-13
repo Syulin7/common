@@ -69,9 +69,9 @@ var (
 type GangScheduler string
 
 const (
-	GangSchedulerNone             GangScheduler = "None"
 	GangSchedulerVolcano          GangScheduler = "volcano"
 	GangSchedulerSchedulerPlugins GangScheduler = "scheduler-plugins"
+	GangSchedulerDefault          GangScheduler = "default-scheduler"
 )
 
 // JobControllerConfiguration contains configuration of operator.
@@ -81,7 +81,7 @@ type JobControllerConfiguration struct {
 }
 
 func (c *JobControllerConfiguration) EnableGangScheduling() bool {
-	return c.GangScheduling != GangSchedulerNone
+	return c.GangScheduling != ""
 }
 
 // JobController abstracts other operators to manage the lifecycle of Jobs.
@@ -170,16 +170,15 @@ var GenVolcanoSetupFunc = func(vci volcanoclient.Interface) GangSchedulingSetupF
 	}
 }
 
-var GenSchedulerPluginsSetupFunc = func(c client.Client) GangSchedulingSetupFunc {
+var GenSchedulerPluginsSetupFunc = func(c client.Client, gangSchedulerName string) GangSchedulingSetupFunc {
 	return func(jc *JobController) {
-		jc.Config.GangScheduling = GangSchedulerSchedulerPlugins
-		jc.PodGroupControl = control.NewSchedulerPluginsControl(c)
+		jc.Config.GangScheduling = GangScheduler(gangSchedulerName)
+		jc.PodGroupControl = control.NewSchedulerPluginsControl(c, gangSchedulerName)
 	}
 }
 
 var GenNonGangSchedulerSetupFunc = func() GangSchedulingSetupFunc {
 	return func(jc *JobController) {
-		jc.Config.GangScheduling = GangSchedulerNone
 		jc.PodGroupControl = nil
 	}
 }
@@ -210,7 +209,7 @@ func NewJobController(
 
 	jc := JobController{
 		Controller:     controllerImpl,
-		Config:         JobControllerConfiguration{GangScheduling: GangSchedulerNone},
+		Config:         JobControllerConfiguration{},
 		PodControl:     podControl,
 		ServiceControl: serviceControl,
 		KubeClientSet:  kubeClientSet,
